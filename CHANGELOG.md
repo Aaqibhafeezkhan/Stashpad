@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Every command that changes the store answers `--json`:** `accept`, `reject`, `confirm`, `pin`, `unpin`, `merge`, `forget`, `snapshot`, `restore`, `import`, `handover` and `synonym add` used to print their sentence even with `--json`. Each now prints exactly one JSON object on stdout (`restore` without `--yes` answers `{status:"dry-run"}` and changes nothing), warnings stay on stderr, and without `--json` every sentence is unchanged. The keys are listed in AGENT-GUIDE.md. Thanks to @17302513901yh-lang! (#75, #104, #106)
+
 - **`stashpad recall` gives the same memories as the prompt hook:** it now reads the project store and the global store, project matches first, up to three in total and never the same memory twice, so a global memory the agent would get is no longer answered with "No clear match.". `--json` adds a `stores` field that says where each hit came from, and `--global` still reads only the global store. Thanks to @17302513901yh-lang! (#48, #93)
 
 - **Language names keep their symbols in search:** `C++`, `C#` and `F#` are indexed as one token instead of being cut to a single letter, and each stays distinct from the others. A standalone capital letter such as `R` is searchable too, while `A` and `I` stay ordinary words. camelCase, accents, CJK pairs and plural folding work as before. Thanks to @bfs2021! (#76, #81)
