@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { request, Server } from "node:http";
 import { run } from "../src/cli.mjs";
 import { startUi } from "../src/ui.mjs";
-import { listMemories, listPending, saveMemory } from "../src/store.mjs";
+import { listMemories, listPending, queueForget, saveMemory } from "../src/store.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fresh = () => mkdtempSync(join(tmpdir(), "stashpad-ui-"));
@@ -94,7 +94,7 @@ test("accepting from the page moves the memory into the store", async () => {
     const headers = { "x-stashpad-token": ui.token };
     const reply = await call(ui.port, { method: "POST", path: "/api/accept", headers, body: { id: "agent-note" } });
     assert.equal(reply.status, 200);
-    assert.match(reply.json().message, /Geaccepteerd: agent-note/);
+    assert.match(reply.json().message, /Accepted: agent-note/);
   });
   assert.deepEqual(listPending(dir).rows, []);
   assert.deepEqual(listMemories(dir).rows.map((r) => r.id), ["agent-note"]);
@@ -136,6 +136,30 @@ test("search and the audit log are available through the page", async () => {
     assert.equal(search.json().results[0].id, "db-choice");
     const audit = await call(ui.port, { path: "/api/audit", headers });
     assert.equal(audit.json().entries[0].action, "saved");
+  });
+});
+
+test("ending requests are returned in English through the pending detail route", async () => {
+  const dir = fresh();
+  saveMemory(dir, { id: "old-note", kind: "fact", text: "A note to end.", sourceType: "user", sourceRef: "chat" }, "2026-10-01");
+  queueForget(dir, "old-note", "This is no longer accurate.", "user request", "user");
+  await withUi(dir, async (ui) => {
+    const reply = await call(ui.port, {
+      path: "/api/pending/forget-old-note",
+      headers: { "x-stashpad-token": ui.token },
+    });
+    assert.equal(reply.status, 200);
+    assert.equal(reply.json().text, 'End request for "old-note". Reason: This is no longer accurate.');
+  });
+});
+
+test("the review page uses English labels and declares its language", async () => {
+  await withUi(fresh(), async (ui) => {
+    const page = await call(ui.port);
+    assert.match(page.text, /<html lang="en">/);
+    assert.match(page.text, /Waiting for review/);
+    assert.match(page.text, /Audit log/);
+    assert.doesNotMatch(page.text, /Wacht op beoordeling|Geheugen|Logboek/);
   });
 });
 
