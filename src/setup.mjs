@@ -3,7 +3,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const CLIENTS = ["generic", "claude-code", "vscode", "codex", "agents-md"];
+export const CLIENTS = ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md"];
 
 const binPath = () => resolve(fileURLToPath(new URL("../bin/stashpad.mjs", import.meta.url)));
 
@@ -47,6 +47,18 @@ export function setupText(client, { dir = null, bin: binOverride = null, nodePat
     case "vscode": {
       const server = { type: "stdio", ...run, ...(env ? { env } : {}) };
       return ["Put this in .vscode/mcp.json:", JSON.stringify({ servers: { stashpad: server } }, null, 2)].join("\n");
+    }
+    case "opencode": {
+      const server = {
+        type: "local",
+        command: [run.command, ...run.args],
+        enabled: true,
+        ...(env ? { environment: env } : {}),
+      };
+      return [
+        "Put this in opencode.json:",
+        JSON.stringify({ $schema: "https://opencode.ai/config.json", mcp: { stashpad: server } }, null, 2),
+      ].join("\n");
     }
     case "codex":
       return [
