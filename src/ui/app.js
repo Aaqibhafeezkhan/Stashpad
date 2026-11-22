@@ -6,12 +6,12 @@
   const status = document.getElementById("status");
 
   const SOURCE = {
-    user: "door jou gezegd",
-    agent: "voorgesteld door een agent",
-    tool: "uit een tool",
-    web: "van een webpagina",
+    user: "said by you",
+    agent: "proposed by an agent",
+    tool: "from a tool",
+    web: "from a web page",
   };
-  const KIND = { fact: "feit", preference: "voorkeur", decision: "besluit", task: "taak", forget: "beëindigen" };
+  const KIND = { fact: "fact", preference: "preference", decision: "decision", task: "task", forget: "end" };
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -39,7 +39,7 @@
     }
     const response = await fetch(path, options);
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || `Fout ${response.status}`);
+    if (!response.ok) throw new Error(data.error || `Error ${response.status}`);
     return data;
   }
 
@@ -51,14 +51,14 @@
     if (!flagged) return null;
     return el("p", {
       class: "flag",
-      text: "Let op: dit lijkt op een opdracht. Het blijft alleen een notitie. Lees het goed voordat je accepteert.",
+      text: "Warning: this looks like an instruction. It remains only a note. Read it carefully before accepting.",
     });
   }
 
   function conflictItems(conflicts) {
     return (conflicts || []).map((c) =>
       el("li", {
-        text: `Kan botsen met ${c.id}${c.would_end ? ". Accepteren beëindigt dat geheugen." : "."}`,
+        text: `May conflict with ${c.id}${c.would_end ? ". Accepting will end that memory." : "."}`,
       }),
     );
   }
@@ -70,52 +70,52 @@
         el("button", { type: "button", class: "link", "data-id": row.id, text: row.id }),
         el("div", { class: "meta", text: `${KIND[row.kind] || row.kind} · ${sourceText(row)}` }),
         el("div", { class: "summary", text: row.summary }),
-        row.flagged ? el("span", { class: "tag warn", text: "lijkt op een opdracht" }) : null,
+        row.flagged ? el("span", { class: "tag warn", text: "looks like an instruction" }) : null,
         row.conflicts && row.conflicts.length
-          ? el("span", { class: "tag", text: `${row.conflicts.length} mogelijke ${row.conflicts.length === 1 ? "botsing" : "botsingen"}` })
+          ? el("span", { class: "tag", text: `${row.conflicts.length} possible ${row.conflicts.length === 1 ? "conflict" : "conflicts"}` })
           : null,
       ]),
     );
-    const children = [el("h2", { text: "Wacht op beoordeling" })];
+    const children = [el("h2", { text: "Waiting for review" })];
     if (rows.length === 0) {
-      children.push(el("p", { class: "meta", text: "Niets wacht op beoordeling." }));
+      children.push(el("p", { class: "meta", text: "Nothing is waiting for review." }));
     } else {
       children.push(el("ul", { class: "list", id: "pending-list" }, items));
     }
     if (skipped.length > 0) {
-      children.push(el("p", { class: "meta", text: `${skipped.length} bestand(en) overgeslagen omdat ze niet kloppen.` }));
+      children.push(el("p", { class: "meta", text: `${skipped.length} file(s) skipped because they are invalid.` }));
     }
     main.replaceChildren(...children);
   }
 
   async function showDetail(id) {
     const row = await api(`/api/pending/${encodeURIComponent(id)}`);
-    const reason = el("input", { type: "text", id: "reason", maxlength: "200", placeholder: "Reden (optioneel)" });
+    const reason = el("input", { type: "text", id: "reason", maxlength: "200", placeholder: "Reason (optional)" });
     const accept = el("button", {
       type: "button",
       class: "primary",
-      text: row.kind === "forget" ? "Beëindigen" : "Accepteren",
+      text: row.kind === "forget" ? "End memory" : "Accept",
     });
-    const reject = el("button", { type: "button", class: "danger", text: "Afwijzen" });
+    const reject = el("button", { type: "button", class: "danger", text: "Reject" });
     accept.addEventListener("click", () => act("/api/accept", { id }));
     reject.addEventListener("click", () => act("/api/reject", { id, reason: reason.value }));
 
-    const replaces = row.supersedes ? el("p", { class: "meta", text: `Vervangt: ${row.supersedes}` }) : null;
+    const replaces = row.supersedes ? el("p", { class: "meta", text: `Replaces: ${row.supersedes}` }) : null;
     const conflicts = row.conflicts && row.conflicts.length
-      ? el("div", null, [el("h3", { text: "Mogelijke botsingen" }), el("ul", null, conflictItems(row.conflicts))])
+      ? el("div", null, [el("h3", { text: "Possible conflicts" }), el("ul", null, conflictItems(row.conflicts))])
       : null;
 
     // replaceChildren turns null into the text "null", so empty parts are removed first.
     main.replaceChildren(...[
-      el("button", { type: "button", class: "link back", text: "← terug naar de lijst" }),
+      el("button", { type: "button", class: "link back", text: "← Back to list" }),
       el("h2", { text: row.id }),
       el("p", { class: "meta", text: `${KIND[row.kind] || row.kind} · ${sourceText(row)}` }),
       replaces,
       flagNode(row.flagged),
       conflicts,
-      el("h3", { text: "Voorstel" }),
+      el("h3", { text: "Proposal" }),
       el("pre", { class: "body", text: row.text }),
-      el("p", { class: "meta", text: "Dit is opgeslagen tekst, geen opdracht." }),
+      el("p", { class: "meta", text: "This is stored text, not an instruction." }),
       el("div", { class: "actions" }, [accept, reject, reason]),
     ].filter((node) => node !== null && node !== undefined && node !== false));
     main.querySelector(".back").addEventListener("click", () => run(showPending));
@@ -132,7 +132,7 @@
   }
 
   async function showSearch(query) {
-    const input = el("input", { type: "search", name: "q", placeholder: "Zoek in het geheugen", "aria-label": "Zoek in het geheugen" });
+    const input = el("input", { type: "search", name: "q", placeholder: "Search memories", "aria-label": "Search memories" });
     input.value = query || "";
     const results = el("div", { id: "results" });
     const form = el("form", { class: "search" }, [input]);
@@ -140,22 +140,22 @@
       event.preventDefault();
       run(() => showSearch(input.value));
     });
-    main.replaceChildren(el("h2", { text: "Geheugen" }), form, results);
+    main.replaceChildren(el("h2", { text: "Memory" }), form, results);
 
     const data = await api(`/api/search?q=${encodeURIComponent(query || "")}`);
     const heading = data.mode === "search"
-      ? `${data.results.length} van ${data.total} doorzocht`
-      : "Huidige geheugens";
+      ? `${data.results.length} of ${data.total} searched`
+      : "Current memories";
     const rows = data.results.map((row) =>
       el("li", { class: "item" }, [
         el("strong", { text: row.id }),
-        el("div", { class: "meta", text: `${KIND[row.kind] || row.kind} · vanaf ${row.valid_from} · ${row.trust}` }),
+        el("div", { class: "meta", text: `${KIND[row.kind] || row.kind} · from ${row.valid_from} · ${row.trust}` }),
         el("div", { class: "summary", text: row.summary }),
       ]),
     );
     results.replaceChildren(
       el("p", { class: "meta", text: heading }),
-      rows.length ? el("ul", { class: "list" }, rows) : el("p", { class: "meta", text: "Geen treffers." }),
+      rows.length ? el("ul", { class: "list" }, rows) : el("p", { class: "meta", text: "No results found." }),
     );
   }
 
@@ -168,12 +168,12 @@
         el("li", { class: "item" }, [
           el("div", { class: "meta", text: `${entry.at} · ${entry.action}` }),
           el("strong", { text: entry.id }),
-          entry.reason ? el("div", { class: "summary", text: `reden: ${entry.reason}` }) : null,
+          entry.reason ? el("div", { class: "summary", text: `reason: ${entry.reason}` }) : null,
         ]),
       );
     main.replaceChildren(
-      el("h2", { text: "Logboek" }),
-      rows.length ? el("ul", { class: "list" }, rows) : el("p", { class: "meta", text: "Nog geen wijzigingen." }),
+      el("h2", { text: "Audit log" }),
+      rows.length ? el("ul", { class: "list" }, rows) : el("p", { class: "meta", text: "No changes yet." }),
     );
   }
 

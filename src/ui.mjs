@@ -123,15 +123,15 @@ async function api(req, res, url, dir) {
       const id = requireText(body.id, "id");
       acceptPending(dir, id);
       const message = id.startsWith("forget-")
-        ? `Beëindigd: ${id.slice("forget-".length)}. Het blijft in de store met een einddatum.`
-        : `Geaccepteerd: ${id}.`;
+        ? `Ended: ${id.slice("forget-".length)}. It remains in the store with an end date.`
+        : `Accepted: ${id}.`;
       return sendJson(res, 200, { message });
     }
     if (url.pathname === "/api/reject") {
       const id = requireText(body.id, "id");
       const reason = typeof body.reason === "string" && body.reason.trim() !== "" ? body.reason.trim() : null;
       rejectPending(dir, id, reason);
-      return sendJson(res, 200, { message: `Afgewezen: ${id}. Bewaard in het logboek.` });
+      return sendJson(res, 200, { message: `Rejected: ${id}. Saved in the audit log.` });
     }
   }
   return sendJson(res, 404, { error: "not found" });

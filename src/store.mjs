@@ -443,7 +443,7 @@ export function readPending(dir, id) {
       valid_from: null,
       supersedes: null,
       target: request.target,
-      text: `Beëindigen van "${request.target}". Reden: ${request.reason}`,
+      text: `End request for "${request.target}". Reason: ${request.reason}`,
       conflicts: [],
       flagged: findInstructionLikeText(request.reason),
     };
