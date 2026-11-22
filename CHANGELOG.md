@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The review page (`stashpad ui`) is in English:** every label, button, placeholder and status message, the accept, reject and end-memory replies from the server, and the end-request text from `readPending` are now English, and the page declares `lang="en"`. Nothing else about the page changed. Thanks to @Aaqibhafeezkhan! (#17, #109)
+
 - **Every command that changes the store answers `--json`:** `accept`, `reject`, `confirm`, `pin`, `unpin`, `merge`, `forget`, `snapshot`, `restore`, `import`, `handover` and `synonym add` used to print their sentence even with `--json`. Each now prints exactly one JSON object on stdout (`restore` without `--yes` answers `{status:"dry-run"}` and changes nothing), warnings stay on stderr, and without `--json` every sentence is unchanged. The keys are listed in AGENT-GUIDE.md. Thanks to @17302513901yh-lang! (#75, #104, #106)
 
 - **`stashpad recall` gives the same memories as the prompt hook:** it now reads the project store and the global store, project matches first, up to three in total and never the same memory twice, so a global memory the agent would get is no longer answered with "No clear match.". `--json` adds a `stores` field that says where each hit came from, and `--global` still reads only the global store. Thanks to @17302513901yh-lang! (#48, #93)
