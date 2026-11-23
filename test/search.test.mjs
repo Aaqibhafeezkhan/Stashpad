@@ -238,6 +238,16 @@ test("verb endings fold to the base word, and lookalikes keep themselves (#47)",
     ["agreed", "agree"],
     ["worked", "work"], ["needed", "need"],
     ["succeed", "succeeds"],
+    // Plurals of -ing/-ed words meet their singulars: the plural comes off
+    // first, then the verb ending folds on what is left (#47 review).
+    ["warning", "warnings"], ["setting", "settings"],
+    ["building", "buildings"], ["mapping", "mappings"],
+    ["heading", "headings"], ["embedding", "embeddings"],
+    ["embed", "embeds"], ["hundred", "hundreds"],
+    ["cache", "caches"], ["niche", "niches"], ["axe", "axes"],
+    // A swallowed "e" comes back for a four-letter base with a single vowel.
+    ["staging", "stage"], ["staged", "stage"],
+    ["writing", "write"], ["closing", "close"],
   ];
   for (const [a, b] of mustMeet) {
     assert.equal(stem(a), stem(b), `${a} should fold to the same stem as ${b}`);
