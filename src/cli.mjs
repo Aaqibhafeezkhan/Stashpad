@@ -94,7 +94,7 @@ export const USAGE = `Usage:
   stashpad eval [--json]       run the fixed checks and baselines in a temporary store
   stashpad mcp                 serve the eight agent tools over stdio (for MCP clients)
   stashpad ui [--port N] [--open]   review waiting memories in a page on this computer (Ctrl+C stops it)
-  stashpad setup [generic|claude-code|vscode|codex|agents-md]   print the settings that connect an agent to Stashpad
+  stashpad setup [generic|claude-code|vscode|codex|opencode|agents-md]   print the settings that connect an agent to Stashpad
   stashpad setup claude-code --status-line   print the Claude Code status line setting
   stashpad where [--json]              which store this folder uses, and why
   stashpad doctor [--client] [--json]  check that Stashpad and the store are healthy, with a fix for each problem

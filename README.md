@@ -14,13 +14,13 @@
   <img src="https://raw.githubusercontent.com/laaielichter/stashpad/main/docs/demo/demo.svg" alt="Stashpad in a terminal: a person saves and pins a decision, an agent's note waits for review, recall finds both for a request, and the brief brings the pinned rule back after compaction" width="760">
 </p>
 
-Works with Claude Code, Codex, Cursor, VS Code, Gemini CLI and any other MCP client, or with no MCP at all (plain commands and an `AGENTS.md` block). No model, no cloud, no dependencies: Node 20 or newer.
+Works with Claude Code, Codex, OpenCode, Cursor, VS Code, Gemini CLI and any other MCP client, or with no MCP at all (plain commands and an `AGENTS.md` block). No model, no cloud, no dependencies: Node 20 or newer.
 
 ## Quickstart
 
 ```bash
 npm install -g stashpad
-stashpad setup                  # prints the MCP settings for your agent app (generic, claude-code, vscode, codex)
+stashpad setup                  # prints the MCP settings for your agent app (generic, claude-code, vscode, codex, opencode)
 stashpad doctor --client        # starts the server the way your agent app does and checks it answers
 ```
 

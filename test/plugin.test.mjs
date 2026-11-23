@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { run } from "../src/cli.mjs";
 import { saveMemory } from "../src/store.mjs";
@@ -36,7 +36,7 @@ test("the session start hook command runs quickly, never fails and stays short",
 });
 
 test("setup prints settings for each client and rejects unknown ones", async () => {
-  for (const client of ["generic", "claude-code", "vscode", "codex", "agents-md"]) {
+  for (const client of ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md"]) {
     const out = [];
     const io = { stdout: (s) => out.push(s), stderr: () => {}, env: {}, cwd: root, readStdin: async () => "" };
     assert.equal(await run(["setup", client], io), 0);
@@ -59,6 +59,27 @@ test("setup run through npx points at npx, not at a temporary cache path", async
   const text = setupText("generic", { bin: "/home/u/.npm/_npx/abc/node_modules/stashpad/bin/stashpad.mjs" });
   assert.deepEqual(JSON.parse(text.slice(text.indexOf("{"))).mcpServers.stashpad, { command: "npx", args: ["-y", "stashpad", "mcp"] });
   assert.match(setupText("claude-code", { bin: "C:\\Users\\x\\AppData\\npm-cache\\_npx\\1\\node_modules\\stashpad\\bin\\stashpad.mjs" }), /-- npx -y stashpad mcp$/);
+});
+
+test("setup prints valid OpenCode JSON with a command array and environment", async () => {
+  const { setupText } = await import("../src/setup.mjs");
+  const output = setupText("opencode", { dir: "/data/notes", nodePath: "/usr/bin/node", bin: "/opt/stashpad/bin/stashpad.mjs" });
+  const config = JSON.parse(output.slice(output.indexOf("{")));
+  assert.equal(config.$schema, "https://opencode.ai/config.json");
+  assert.deepEqual(config.mcp.stashpad, {
+    type: "local",
+    command: ["/usr/bin/node", "/opt/stashpad/bin/stashpad.mjs", "mcp"],
+    enabled: true,
+    environment: { STASHPAD_DIR: resolve("/data/notes") },
+  });
+});
+
+test("OpenCode setup uses npx when Stashpad is running from an npx cache", async () => {
+  const { setupText } = await import("../src/setup.mjs");
+  const output = setupText("opencode", { bin: "/home/u/.npm/_npx/abc/node_modules/stashpad/bin/stashpad.mjs" });
+  const config = JSON.parse(output.slice(output.indexOf("{")));
+  assert.deepEqual(config.mcp.stashpad.command, ["npx", "-y", "stashpad", "mcp"]);
+  assert.equal("environment" in config.mcp.stashpad, false);
 });
 
 test("server.json for the MCP registry matches the package", () => {
