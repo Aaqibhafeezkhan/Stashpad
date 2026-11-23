@@ -68,10 +68,46 @@ export function tokenize(text) {
   return tokens;
 }
 
-// Light plural folding, so "tools" finds "tool" and "policies" finds "policy".
+// Light folding, so "tools" finds "tool", "testing" finds "test" and "deployed" finds "deploy".
 // It is deliberately small: it is not a full stemmer, and it is applied to both query and text.
+// A verb ending folds only when the base left behind still looks like a word: it must carry
+// a vowel (so "thing", "string" and "sing" keep themselves), a doubled consonant is undone
+// only for the letters doubling takes in real verbs (so "falling" stays "fall", not "fal"),
+// and a trailing "e" the ending swallowed comes back only for a short base ("making" ->
+// "make", "used" -> "use") or one ending in "re" ("agreed" -> "agree"). Forms the rules
+// cannot reach ("dancing"/"dance", "writing"/"write", "tried"/"try") stay misses rather
+// than false hits.
+const VOWEL = /[aeiou]/;
+const DOUBLE_UNDO = new Set(["b", "d", "g", "m", "n", "p", "r", "t"]);
+
+function foldVerbEnding(token, ending) {
+  const base = token.slice(0, -ending.length);
+  if (!VOWEL.test(base)) return token;
+  const last = base.at(-1);
+  const doubled = base.length >= 2 && base.at(-2) === last;
+  if (doubled && DOUBLE_UNDO.has(last) && base.length >= 4) return base.slice(0, -1);
+  if (ending === "ed" && base.endsWith("ce")) return token;
+  if (ending === "ed" && base.endsWith("re") && base.length >= 4) return `${base}e`;
+  if (base.length >= 4) return base;
+  if (doubled) return token;
+  if (base.length === 3 && (last === "x" || last === "z")) return base;
+  if (base.length === 3 && !VOWEL.test(last) && last !== "s") return `${base}e`;
+  if (base.length === 2 && !VOWEL.test(last)) return `${base}e`;
+  return token;
+}
+
 export function stem(token) {
   if (token.length > 4 && token.endsWith("ies")) return `${token.slice(0, -3)}y`;
+  // "-es" after ss, x, ch, sh: "classes" -> "class", "watches" -> "watch". After a single
+  // "s" the plain "-s" rule below does the job, so "horses" still meets "horse".
+  if (
+    token.length >= 4 &&
+    (token.endsWith("sses") || token.endsWith("xes") || token.endsWith("ches") || token.endsWith("shes"))
+  ) {
+    return token.slice(0, -2);
+  }
+  if (token.length > 4 && token.endsWith("ing")) return foldVerbEnding(token, "ing");
+  if (token.length > 3 && token.endsWith("ed")) return foldVerbEnding(token, "ed");
   if (token.length > 3 && token.endsWith("s") && !token.endsWith("ss")) return token.slice(0, -1);
   return token;
 }

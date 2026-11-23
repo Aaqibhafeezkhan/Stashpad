@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { run } from "../src/cli.mjs";
-import { bm25Rank, tokenize } from "../src/search.mjs";
+import { bm25Rank, stem, tokenize } from "../src/search.mjs";
 import { saveMemory } from "../src/store.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -220,6 +220,45 @@ test("plural and singular forms find each other", async () => {
 test("words that end in s but are not plurals still match themselves", () => {
   assert.equal(bm25Rank([{ id: "a", text: "access and class notes" }], "class")[0].id, "a");
   assert.equal(bm25Rank([{ id: "a", text: "access and class notes" }], "access")[0].id, "a");
+});
+
+test("verb endings fold to the base word, and lookalikes keep themselves (#47)", () => {
+  const mustMeet = [
+    ["testing", "test"], ["tested", "test"], ["tests", "test"],
+    ["deploying", "deploy"], ["deployed", "deploy"], ["deploys", "deploy"],
+    ["committing", "commit"], ["committed", "commit"],
+    ["running", "run"],
+    ["using", "use"], ["used", "use"],
+    ["making", "make"],
+    ["stopping", "stop"], ["stopped", "stop"],
+    ["getting", "get"], ["setting", "set"],
+    ["falling", "fall"], ["calling", "call"], ["passing", "pass"],
+    ["watches", "watch"], ["boxes", "box"], ["classes", "class"], ["passes", "pass"],
+    ["horses", "horse"], ["houses", "house"],
+    ["agreed", "agree"],
+    ["worked", "work"], ["needed", "need"],
+    ["succeed", "succeeds"],
+  ];
+  for (const [a, b] of mustMeet) {
+    assert.equal(stem(a), stem(b), `${a} should fold to the same stem as ${b}`);
+  }
+  const mustNotMeet = [
+    ["thing", "th"], ["bed", "b"], ["string", "str"], ["need", "ne"], ["sing", "s"],
+    ["seed", "se"], ["succeed", "succe"], ["freed", "free"], ["bleed", "blee"],
+  ];
+  for (const [a, b] of mustNotMeet) {
+    assert.notEqual(stem(a), stem(b), `${a} must not fold to ${b}`);
+  }
+});
+
+test("verb forms find a memory written with another form (#47)", () => {
+  const docs = [{
+    id: "tests-cmd",
+    text: "Run the tests with npm test before every commit; deploys happen from the main branch.",
+  }];
+  for (const query of ["testing", "deployed", "committing", "test", "tests", "deploy"]) {
+    assert.equal(bm25Rank(docs, query)[0]?.id, "tests-cmd", `"${query}" should find tests-cmd`);
+  }
 });
 
 test("bm25Rank gives no results for a query without matching terms", () => {
