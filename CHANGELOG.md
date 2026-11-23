@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **docs/ARCHITECTURE.md matches 0.4.0 again:** every module in `src/` is named with its job (anchors, decisions, git, hookswitch, sessions, shown, statusline and the rest), the diagram shows the MCP server's eight tools and the modules added in 0.3, and the store listing has `handoffs/`, `feedback.jsonl` and `misses.jsonl`. A test reads `src/` itself, so a new module that the page does not name fails the suite. Thanks to @ghozali25! (#11, #112)
+
 - **`stashpad setup opencode` prints an OpenCode config:** an `opencode.json` block with `mcp.stashpad` as a `local` server, the full Node path (or `npx -y stashpad mcp` when run through npx) and its arguments as one `command` array, and the store path under `environment` with `--dir` or `STASHPAD_DIR`. Like the other clients it only prints and never edits your config. Thanks to @Aaqibhafeezkhan! (#13, #108)
 
 - **The review page (`stashpad ui`) is in English:** every label, button, placeholder and status message, the accept, reject and end-memory replies from the server, and the end-request text from `readPending` are now English, and the page declares `lang="en"`. Nothing else about the page changed. Thanks to @Aaqibhafeezkhan! (#17, #109)
