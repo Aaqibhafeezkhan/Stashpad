@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`stashpad setup opencode` prints an OpenCode config:** an `opencode.json` block with `mcp.stashpad` as a `local` server, the full Node path (or `npx -y stashpad mcp` when run through npx) and its arguments as one `command` array, and the store path under `environment` with `--dir` or `STASHPAD_DIR`. Like the other clients it only prints and never edits your config. Thanks to @Aaqibhafeezkhan! (#13, #108)
+
 - **The review page (`stashpad ui`) is in English:** every label, button, placeholder and status message, the accept, reject and end-memory replies from the server, and the end-request text from `readPending` are now English, and the page declares `lang="en"`. Nothing else about the page changed. Thanks to @Aaqibhafeezkhan! (#17, #109)
 
 - **Every command that changes the store answers `--json`:** `accept`, `reject`, `confirm`, `pin`, `unpin`, `merge`, `forget`, `snapshot`, `restore`, `import`, `handover` and `synonym add` used to print their sentence even with `--json`. Each now prints exactly one JSON object on stdout (`restore` without `--yes` answers `{status:"dry-run"}` and changes nothing), warnings stay on stderr, and without `--json` every sentence is unchanged. The keys are listed in AGENT-GUIDE.md. Thanks to @17302513901yh-lang! (#75, #104, #106)
