@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { run } from "../src/cli.mjs";
 import { saveMemory } from "../src/store.mjs";
@@ -70,7 +70,7 @@ test("setup prints valid OpenCode JSON with a command array and environment", as
     type: "local",
     command: ["/usr/bin/node", "/opt/stashpad/bin/stashpad.mjs", "mcp"],
     enabled: true,
-    environment: { STASHPAD_DIR: "/data/notes" },
+    environment: { STASHPAD_DIR: resolve("/data/notes") },
   });
 });
 
