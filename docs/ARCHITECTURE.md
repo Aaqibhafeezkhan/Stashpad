@@ -5,11 +5,20 @@ Stashpad is a Node 20 package with no dependencies. One entry point (`bin/stashp
 ```mermaid
 graph LR
   bin["bin/stashpad.mjs"] --> cli["cli.mjs"]
-  cli --> mcp["mcp.mjs (5 tools, stdio)"]
+  cli --> mcp["mcp.mjs (8 tools, stdio)"]
   cli --> ui["ui.mjs (local review page)"]
   cli --> brief["brief.mjs"]
   cli --> doctor["doctor.mjs"]
   cli --> setup["setup.mjs"]
+  cli --> hooks["hooks.mjs"]
+  cli --> recall["recall.mjs"]
+  cli --> pins["pins.mjs"]
+  cli --> locate["locate.mjs"]
+  cli --> misses["misses.mjs"]
+  hooks --> recall
+  hooks --> pins
+  recall --> search
+  mcp --> misses
   mcp --> store["store.mjs"]
   ui --> store
   brief --> store
@@ -42,6 +51,22 @@ graph LR
 | `ui.mjs`, `ui/` | The local review page (only this computer, per-run token, text only). |
 | `importer.mjs`, `export.mjs`, `sources.mjs` | JSON Lines in and out; raw source copies. |
 | `eval.mjs` | Fixed, deterministic checks and baselines (`stashpad eval`). |
+| `cli.mjs` | The command line: parses arguments, dispatches commands, returns an exit code. |
+| `index.mjs` | The package entry point; it only exposes the name. |
+| `hooks.mjs`, `hookswitch.mjs` | Agent-app hooks (SessionStart, UserPromptSubmit, …); pausing them per project without uninstalling. |
+| `recall.mjs` | Per-prompt recall: the few memories that clearly match what was just asked. |
+| `pins.mjs` | Pinned memories, read at the start of every session and after compaction. |
+| `locate.mjs` | Which store a command uses: the project store, found from where it runs. |
+| `misses.mjs` | Searches that found nothing, and the synonyms they suggest. |
+| `handoff.mjs`, `feedback.mjs` | Handoffs between sessions, read exactly once; feedback and lint on saved memories. |
+| `entities.mjs` | Things the memories talk about: names, tools, files — fixed rules, no model. |
+| `clientcheck.mjs` | `stashpad doctor --client`: starts the MCP server the way an agent app does and checks it answers. |
+| `fsx.mjs` | File writes that never leave a half-written file (temp file, then rename). |
+| `errors.mjs`, `version.mjs` | Errors that carry a message meant for a person; the one place for version numbers. |
+| `decisions.mjs`, `anchors.mjs` | Decisions as memories with a fixed layout; file anchors: what a memory's files looked like when saved. |
+| `git.mjs` | The little Stashpad asks git: the branch, and which files are not committed. |
+| `sessions.mjs`, `shown.mjs` | Per-session hook state; what Stashpad already put in front of an agent. |
+| `setup.mjs`, `statusline.mjs` | The settings that connect an agent client; the one-line status bar for an agent app. |
 
 ## A store folder
 
@@ -50,8 +75,11 @@ graph LR
   <id>.md               one memory per file
   pending/              writes waiting for a person (<id>.md, forget-<id>.json)
   rejected/             rejected writes, kept for the record
+  handoffs/             handoff notes between sessions (one <id>.json per handoff)
   sources/              raw source copies (never change)
   audit.jsonl           every change, with a short content hash
+  feedback.jsonl        feedback on memories: helpful, stale, wrong
+  misses.jsonl          searches that found nothing (meaningful words only, never the whole query)
   synonyms.json         optional word groups for search
   pins.json             pinned memory ids (a person only)
   anchors.json          files each memory is about, with their hashes (docs/FORMAT.md)
