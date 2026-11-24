@@ -118,11 +118,13 @@ export function stem(token) {
   let base = token;
   if (token.length >= 4 && token.endsWith("sses")) base = token.slice(0, -2);
   else if (token.length >= 4 && token.endsWith("shes")) base = token.slice(0, -2);
-  // "-ches": "watches" -> "watch", but "caches" -> "cache". Strip "es" only when
-  // the "ch" follows a consonant; after a vowel the "e" belongs to the word.
+  // "-ches": "watches" -> "watch", but "caches" -> "cache". Strip "es" when the
+  // "ch" follows a consonant, or two vowels ("reaches", "coaches", "touches");
+  // after a single vowel the "e" belongs to the word ("caches", "niches").
   else if (token.length >= 4 && token.endsWith("ches")) {
-    const beforeCh = token.length >= 5 ? token.at(-5) : "";
-    base = VOWEL.test(beforeCh) ? token.slice(0, -1) : token.slice(0, -2);
+    const vowelBeforeCh = VOWEL.test(token.at(-5) ?? "");
+    const twoVowels = vowelBeforeCh && VOWEL.test(token.at(-6) ?? "");
+    base = vowelBeforeCh && !twoVowels ? token.slice(0, -1) : token.slice(0, -2);
   }
   // "-xes": "boxes" -> "box", but "axes" -> "axe". Strip "es" only when a word of
   // three or more letters is left behind.

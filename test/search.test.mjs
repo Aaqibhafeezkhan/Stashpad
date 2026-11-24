@@ -245,6 +245,9 @@ test("verb endings fold to the base word, and lookalikes keep themselves (#47)",
     ["heading", "headings"], ["embedding", "embeddings"],
     ["embed", "embeds"], ["hundred", "hundreds"],
     ["cache", "caches"], ["niche", "niches"], ["axe", "axes"],
+    // Two vowels before "ch" mean the "e" is the plural ending (#115).
+    ["reach", "reaches"], ["teach", "teaches"], ["beach", "beaches"],
+    ["coach", "coaches"], ["touch", "touches"], ["headache", "headaches"],
     // A swallowed "e" comes back for a four-letter base with a single vowel.
     ["staging", "stage"], ["staged", "stage"],
     ["writing", "write"], ["closing", "close"],
