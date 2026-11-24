@@ -70,8 +70,11 @@ test("shown refuses a non-digit --limit even when the log is empty", async () =>
 
 test("lint names agent memories nothing showed for 90 days, once the log has run that long", () => {
   const dir = fresh();
-  for (const id of ["unused-note", "used-note"]) {
-    saveMemory(dir, { id, kind: "fact", text: `An agent note called ${id} about the release checklist.`, sourceType: "agent", sourceRef: "t" }, "2026-01-01");
+  for (const [id, text] of [
+    ["unused-note", "An agent note called unused-note about the release checklist."],
+    ["used-note", "An agent note called used-note about the release checklist owners and sign-off."],
+  ]) {
+    saveMemory(dir, { id, kind: "fact", text, sourceType: "agent", sourceRef: "t" }, "2026-01-01");
     acceptPending(dir, id);
   }
   put(dir, "mine", "A person's own note about the release checklist steps.");

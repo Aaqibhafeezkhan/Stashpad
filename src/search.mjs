@@ -68,12 +68,75 @@ export function tokenize(text) {
   return tokens;
 }
 
-// Light plural folding, so "tools" finds "tool" and "policies" finds "policy".
+// Light folding, so "tools" finds "tool", "testing" finds "test" and "deployed" finds "deploy".
 // It is deliberately small: it is not a full stemmer, and it is applied to both query and text.
+// A verb ending folds only when the base left behind still looks like a word: it must carry
+// a vowel (so "thing", "string" and "sing" keep themselves), a doubled consonant is undone
+// only for the letters doubling takes in real verbs (so "falling" stays "fall", not "fal"),
+// and a trailing "e" the ending swallowed comes back for a short base ("making" ->
+// "make", "used" -> "use"), for one ending in "re" ("agreed" -> "agree"), or for a
+// four-letter base with a single vowel ending in one consonant ("staging" -> "stage",
+// "writing" -> "write", "closing" -> "close"). Without that last case the fold leaves
+// behind a different real word ("stag"), which then false-hits on that word. Forms the
+// rules cannot reach ("dancing"/"dance", "tried"/"try") stay misses rather than false hits.
+const VOWEL = /[aeiou]/;
+const DOUBLE_UNDO = new Set(["b", "d", "g", "m", "n", "p", "r", "t"]);
+
+function foldVerbEnding(token, ending) {
+  const base = token.slice(0, -ending.length);
+  if (!VOWEL.test(base)) return token;
+  const last = base.at(-1);
+  const doubled = base.length >= 2 && base.at(-2) === last;
+  if (doubled && DOUBLE_UNDO.has(last) && base.length >= 4) return base.slice(0, -1);
+  if (ending === "ed" && base.endsWith("ce")) return token;
+  if (ending === "ed" && base.endsWith("re") && base.length >= 4) return `${base}e`;
+  // Four letters, one vowel, one final consonant: the ending swallowed the "e"
+  // ("stag" -> "stage"). A base with two vowels ("head") or a consonant cluster
+  // at the end ("warn", "sing", "rang") keeps itself.
+  if (
+    base.length === 4 &&
+    /[aeiou][^aeiou]$/.test(base) &&
+    (base.match(/[aeiou]/g) ?? []).length === 1
+  ) {
+    return `${base}e`;
+  }
+  if (base.length >= 4) return base;
+  if (doubled) return token;
+  if (base.length === 3 && (last === "x" || last === "z")) return base;
+  if (base.length === 3 && !VOWEL.test(last) && last !== "s") return `${base}e`;
+  if (base.length === 2 && !VOWEL.test(last)) return `${base}e`;
+  return token;
+}
+
 export function stem(token) {
   if (token.length > 4 && token.endsWith("ies")) return `${token.slice(0, -3)}y`;
-  if (token.length > 3 && token.endsWith("s") && !token.endsWith("ss")) return token.slice(0, -1);
-  return token;
+  // Drop the plural first, then fold a verb ending on what is left, so the
+  // singular and the plural of an -ing/-ed word meet ("warnings" -> "warning" ->
+  // "warn"). Folding first would leave "warnings" at "warning" while "warning"
+  // folds to "warn". The plural rules run here and the verb fold below, never
+  // the other way round.
+  let base = token;
+  if (token.length >= 4 && token.endsWith("sses")) base = token.slice(0, -2);
+  else if (token.length >= 4 && token.endsWith("shes")) base = token.slice(0, -2);
+  // "-ches": "watches" -> "watch", but "caches" -> "cache". Strip "es" only when
+  // the "ch" follows a consonant; after a vowel the "e" belongs to the word.
+  else if (token.length >= 4 && token.endsWith("ches")) {
+    const beforeCh = token.length >= 5 ? token.at(-5) : "";
+    base = VOWEL.test(beforeCh) ? token.slice(0, -1) : token.slice(0, -2);
+  }
+  // "-xes": "boxes" -> "box", but "axes" -> "axe". Strip "es" only when a word of
+  // three or more letters is left behind.
+  else if (token.length >= 4 && token.endsWith("xes")) {
+    base = token.length - 2 >= 3 ? token.slice(0, -2) : token.slice(0, -1);
+  }
+  // A single "s" is the plain plural ("horses" -> "horse"); "ss" words keep
+  // themselves ("class", "pass").
+  else if (token.length > 3 && token.endsWith("s") && !token.endsWith("ss")) {
+    base = token.slice(0, -1);
+  }
+  if (base.length > 4 && base.endsWith("ing")) return foldVerbEnding(base, "ing");
+  if (base.length > 3 && base.endsWith("ed")) return foldVerbEnding(base, "ed");
+  return base;
 }
 
 function termsOf(text) {

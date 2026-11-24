@@ -102,9 +102,10 @@ export const HARD_QUERIES = [
 
 // Questions whose answer is not in the store. A good tool returns nothing, not a guess.
 // Word search matches shared words, so each question here shares no word with the fixed set.
-// (A question such as "tax return" would match "returns" through plural folding; that is a
-// known limit of word search, not an abstention failure.)
-export const ABSENT = ["tax filing", "zebra", "kubernetes cluster", "voetbal uitslag", "hurricane forecast"];
+// (A question such as "tax return" would match "returns" through plural folding, and
+// "tax filing" would match "file" through verb folding; that is a known limit of word
+// search, not an abstention failure.)
+export const ABSENT = ["tax deadline", "zebra", "kubernetes cluster", "voetbal uitslag", "hurricane forecast"];
 
 function grepBaseline(notes, query) {
   const words = tokenize(query);

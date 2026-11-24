@@ -84,11 +84,28 @@ test("close words are the nearest ones first, so the hint suggests the better sy
   await run(["search", "stagin", "--dir", dir], io([]));
   const [row] = missReport(dir);
   assert.equal(row.term, "stagin");
-  // "staging" is one edit away, "stage" is two, even though "stage" was stored first.
-  assert.deepEqual(row.close, ["staging", "stage"]);
+  // "staging" and "stage" fold to the same stem, so the close list holds the
+  // single stemmed form rather than both spellings.
+  assert.deepEqual(row.close, ["stage"]);
   const lines = [];
   assert.equal(await run(["misses", "--dir", dir], io(lines)), 0);
-  assert.match(lines.join("\n"), /synonym add stagin staging\b/);
+  assert.match(lines.join("\n"), /synonym add stagin stage\b/);
+});
+
+test("close words keep the nearer word first when a shorter prefix word also matches", async () => {
+  const dir = fresh();
+  saveMemory(dir, { id: "dep", kind: "fact", text: "Each deploy is listed with its deployment.", sourceType: "user", sourceRef: "t" });
+  await run(["search", "deploymnt", "--dir", dir], io([]));
+  const [row] = missReport(dir);
+  assert.equal(row.term, "deploymnt");
+  // "deployment" is one edit away and comes first; "deploy" is three edits
+  // away but shares the prefix, so it still makes the list after it. This
+  // keeps the ordering check alive now that "staging"/"stage" share one stem
+  // and the test above can no longer order two words (#113 review).
+  assert.deepEqual(row.close, ["deployment", "deploy"]);
+  const lines = [];
+  assert.equal(await run(["misses", "--dir", dir], io(lines)), 0);
+  assert.match(lines.join("\n"), /synonym add deploymnt deployment\b/);
 });
 
 test("close words at the same distance keep a stable order", async () => {
