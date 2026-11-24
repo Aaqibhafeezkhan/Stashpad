@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Search folds `-ing` and `-ed` word forms:** `testing` and `tested` now find a memory that says `tests`, `deployed` finds `deploys` and `committing` finds `commit`. Doubled consonants undo (`running` finds `run`), a swallowed `e` comes back (`making` finds `make`, `staging` finds `stage`), and the plural comes off first, so `warnings`, `settings` and `caches` still meet their singulars. Lookalikes such as `thing`, `string`, `bed` and `need` keep themselves, and `stashpad eval` gives the same results. Thanks to @ghozali25! (#47, #113)
+
 - **docs/ARCHITECTURE.md matches 0.4.0 again:** every module in `src/` is named with its job (anchors, decisions, git, hookswitch, sessions, shown, statusline and the rest), the diagram shows the MCP server's eight tools and the modules added in 0.3, and the store listing has `handoffs/`, `feedback.jsonl` and `misses.jsonl`. A test reads `src/` itself, so a new module that the page does not name fails the suite. Thanks to @ghozali25! (#11, #112)
 
 - **`stashpad setup opencode` prints an OpenCode config:** an `opencode.json` block with `mcp.stashpad` as a `local` server, the full Node path (or `npx -y stashpad mcp` when run through npx) and its arguments as one `command` array, and the store path under `environment` with `--dir` or `STASHPAD_DIR`. Like the other clients it only prints and never edits your config. Thanks to @Aaqibhafeezkhan! (#13, #108)
