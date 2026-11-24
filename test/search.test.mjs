@@ -255,6 +255,9 @@ test("verb endings fold to the base word, and lookalikes keep themselves (#47)",
   const mustNotMeet = [
     ["thing", "th"], ["bed", "b"], ["string", "str"], ["need", "ne"], ["sing", "s"],
     ["seed", "se"], ["succeed", "succe"], ["freed", "free"], ["bleed", "blee"],
+    // Pin the "no vowel, no fold" guard in foldVerbEnding: without it "thing"
+    // folds to "the" and "bring" to "bre" (#113 review).
+    ["thing", "the"], ["bring", "bre"],
   ];
   for (const [a, b] of mustNotMeet) {
     assert.notEqual(stem(a), stem(b), `${a} must not fold to ${b}`);

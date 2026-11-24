@@ -92,6 +92,22 @@ test("close words are the nearest ones first, so the hint suggests the better sy
   assert.match(lines.join("\n"), /synonym add stagin stage\b/);
 });
 
+test("close words keep the nearer word first when a shorter prefix word also matches", async () => {
+  const dir = fresh();
+  saveMemory(dir, { id: "dep", kind: "fact", text: "Each deploy is listed with its deployment.", sourceType: "user", sourceRef: "t" });
+  await run(["search", "deploymnt", "--dir", dir], io([]));
+  const [row] = missReport(dir);
+  assert.equal(row.term, "deploymnt");
+  // "deployment" is one edit away and comes first; "deploy" is three edits
+  // away but shares the prefix, so it still makes the list after it. This
+  // keeps the ordering check alive now that "staging"/"stage" share one stem
+  // and the test above can no longer order two words (#113 review).
+  assert.deepEqual(row.close, ["deployment", "deploy"]);
+  const lines = [];
+  assert.equal(await run(["misses", "--dir", dir], io(lines)), 0);
+  assert.match(lines.join("\n"), /synonym add deploymnt deployment\b/);
+});
+
 test("close words at the same distance keep a stable order", async () => {
   const dir = fresh();
   saveMemory(dir, { id: "spellings", kind: "fact", text: "staginy and staginx are spellings nobody searches for.", sourceType: "user", sourceRef: "t" });
