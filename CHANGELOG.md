@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Search folds more `-ches` plurals:** with two vowels before `ch`, the `-es` is the plural ending, so `reaches`, `teaches`, `beaches`, `coaches` and `touches` (and `speeches`, `approaches`) find their singulars. `caches`/`cache`, `niches`/`niche` and `watches`/`watch` still meet. Thanks to @monkey9-Cyber-cat-Spidy! (#115, #117)
+
 - **Search folds `-ing` and `-ed` word forms:** `testing` and `tested` now find a memory that says `tests`, `deployed` finds `deploys` and `committing` finds `commit`. Doubled consonants undo (`running` finds `run`), a swallowed `e` comes back (`making` finds `make`, `staging` finds `stage`), and the plural comes off first, so `warnings`, `settings` and `caches` still meet their singulars. Lookalikes such as `thing`, `string`, `bed` and `need` keep themselves, and `stashpad eval` gives the same results. Thanks to @ghozali25! (#47, #113)
 
 - **docs/ARCHITECTURE.md matches 0.4.0 again:** every module in `src/` is named with its job (anchors, decisions, git, hookswitch, sessions, shown, statusline and the rest), the diagram shows the MCP server's eight tools and the modules added in 0.3, and the store listing has `handoffs/`, `feedback.jsonl` and `misses.jsonl`. A test reads `src/` itself, so a new module that the page does not name fails the suite. Thanks to @ghozali25! (#11, #112)
