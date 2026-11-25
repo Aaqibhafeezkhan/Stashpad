@@ -36,7 +36,7 @@ test("the session start hook command runs quickly, never fails and stays short",
 });
 
 test("setup prints settings for each client and rejects unknown ones", async () => {
-  for (const client of ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md"]) {
+  for (const client of ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md", "gemini", "cline"]) {
     const out = [];
     const io = { stdout: (s) => out.push(s), stderr: () => {}, env: {}, cwd: root, readStdin: async () => "" };
     assert.equal(await run(["setup", client], io), 0);
@@ -72,6 +72,31 @@ test("setup prints valid OpenCode JSON with a command array and environment", as
     enabled: true,
     environment: { STASHPAD_DIR: resolve("/data/notes") },
   });
+});
+
+test("Gemini CLI and Cline setup print mcpServers with the full Node path (#3)", async () => {
+  const { setupText } = await import("../src/setup.mjs");
+  const opts = { dir: "/data/notes", nodePath: "/usr/bin/node", bin: "/opt/stashpad/bin/stashpad.mjs" };
+  const cases = [
+    ["gemini", "~/.gemini/settings.json", "or .gemini/settings.json in a project"],
+    ["cline", "~/.cline/data/settings/cline_mcp_settings.json", "or set CLINE_MCP_SETTINGS_PATH"],
+  ];
+  for (const [client, path, hint] of cases) {
+    const output = setupText(client, opts);
+    assert.ok(output.startsWith(`Add this to ${path}`), `${client} names its settings file`);
+    assert.ok(output.includes(hint), `${client} names the alternative location`);
+    const config = JSON.parse(output.slice(output.indexOf("{")));
+    assert.deepEqual(config.mcpServers.stashpad, {
+      command: "/usr/bin/node",
+      args: ["/opt/stashpad/bin/stashpad.mjs", "mcp"],
+      env: { STASHPAD_DIR: resolve("/data/notes") },
+    }, `${client} uses the same full launcher path as the other clients`);
+  }
+  for (const client of ["gemini", "cline"]) {
+    const output = setupText(client, { bin: "/home/u/.npm/_npx/abc/node_modules/stashpad/bin/stashpad.mjs" });
+    const config = JSON.parse(output.slice(output.indexOf("{")));
+    assert.deepEqual(config.mcpServers.stashpad.command, "npx", `${client} uses npx from an npx cache`);
+  }
 });
 
 test("OpenCode setup uses npx when Stashpad is running from an npx cache", async () => {

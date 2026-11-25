@@ -3,7 +3,7 @@
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const CLIENTS = ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md"];
+export const CLIENTS = ["generic", "claude-code", "vscode", "codex", "opencode", "agents-md", "gemini", "cline"];
 
 const binPath = () => resolve(fileURLToPath(new URL("../bin/stashpad.mjs", import.meta.url)));
 
@@ -68,6 +68,20 @@ export function setupText(client, { dir = null, bin: binOverride = null, nodePat
         `args = [${run.args.map((a) => JSON.stringify(a)).join(", ")}]`,
         ...(env ? ["[mcp_servers.stashpad.env]", `STASHPAD_DIR = ${JSON.stringify(env.STASHPAD_DIR)}`] : []),
       ].join("\n");
+    case "gemini": {
+      const server = { ...run, ...(env ? { env } : {}) };
+      return [
+        'Add this to ~/.gemini/settings.json (or .gemini/settings.json in a project):',
+        JSON.stringify({ mcpServers: { stashpad: server } }, null, 2),
+      ].join("\n");
+    }
+    case "cline": {
+      const server = { ...run, ...(env ? { env } : {}) };
+      return [
+        "Add this to ~/.cline/data/settings/cline_mcp_settings.json (or set CLINE_MCP_SETTINGS_PATH):",
+        JSON.stringify({ mcpServers: { stashpad: server } }, null, 2),
+      ].join("\n");
+    }
     case "agents-md":
       return 'No MCP needed: run "stashpad sync-agents AGENTS.md" to put a short brief in the file your agent already reads. The agent saves with plain commands.';
     default:
