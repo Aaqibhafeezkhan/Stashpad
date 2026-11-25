@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **`stashpad setup gemini` and `stashpad setup cline` print MCP settings:** an `mcpServers` block for `~/.gemini/settings.json` (or a project `.gemini/settings.json`) and for Cline's `cline_mcp_settings.json` (`~/.cline/data/settings/`, or `CLINE_MCP_SETTINGS_PATH`), with the full Node path (or `npx -y stashpad mcp` from an npx cache) and `STASHPAD_DIR` under `env` when `--dir` is given. Like the other clients it only prints and never edits your config. Thanks to @17302513901yh-lang! (#3, #119)
+
 - **Search folds more `-ches` plurals:** with two vowels before `ch`, the `-es` is the plural ending, so `reaches`, `teaches`, `beaches`, `coaches` and `touches` (and `speeches`, `approaches`) find their singulars. `caches`/`cache`, `niches`/`niche` and `watches`/`watch` still meet. Thanks to @monkey9-Cyber-cat-Spidy! (#115, #117)
 
 - **Search folds `-ing` and `-ed` word forms:** `testing` and `tested` now find a memory that says `tests`, `deployed` finds `deploys` and `committing` finds `commit`. Doubled consonants undo (`running` finds `run`), a swallowed `e` comes back (`making` finds `make`, `staging` finds `stage`), and the plural comes off first, so `warnings`, `settings` and `caches` still meet their singulars. Lookalikes such as `thing`, `string`, `bed` and `need` keep themselves, and `stashpad eval` gives the same results. Thanks to @ghozali25! (#47, #113)
