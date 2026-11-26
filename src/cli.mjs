@@ -936,12 +936,41 @@ function cmdLint(io, dir, values) {
   return 0;
 }
 
+// Options that take a number. Node's parseArgs refuses `--limit -1` as an
+// ambiguous value before our range check can run, so a value that looks like a
+// negative number is joined to its option (`--limit=-1`) and checked as usual.
+const NUMBER_OPTIONS = new Set(["limit", "port", "max-chars", "expires-days"]);
+
+function joinNegativeNumbers(argv) {
+  const out = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--") {
+      out.push(...argv.slice(i));
+      break;
+    }
+    const next = argv[i + 1];
+    if (arg.startsWith("--") && NUMBER_OPTIONS.has(arg.slice(2)) && typeof next === "string" && /^-[0-9]/.test(next)) {
+      out.push(`${arg}=${next}`);
+      i++;
+    } else {
+      out.push(arg);
+    }
+  }
+  return out;
+}
+
 export async function run(argv, io = defaultIo()) {
   let parsed;
   try {
     parsed = parseArgs({ args: argv, options: OPTIONS, allowPositionals: true, strict: true });
   } catch (error) {
-    return usageError(io, error.message);
+    if (error.code !== "ERR_PARSE_ARGS_INVALID_OPTION_VALUE") return usageError(io, error.message);
+    try {
+      parsed = parseArgs({ args: joinNegativeNumbers(argv), options: OPTIONS, allowPositionals: true, strict: true });
+    } catch {
+      return usageError(io, error.message);
+    }
   }
 
   const { values, positionals } = parsed;
