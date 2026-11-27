@@ -214,6 +214,33 @@ test("number options accept plain digits only, not what Number() coerces", async
   }
 });
 
+test("a negative number gets the option's range, not Node's ambiguous-argument text (#122)", async () => {
+  const dir = freshDir();
+  const cases = [
+    [["search", "pnpm", "--limit", "-1", "--dir", dir], "--limit must be a whole number from 1 to 100"],
+    [["entities", "--limit", "-1", "--dir", dir], "--limit must be a whole number from 1 to 500"],
+    [["audit", "--limit", "-1", "--dir", dir], "audit --limit must be a whole number from 1 to 10000"],
+    [["shown", "--limit", "-3", "--dir", dir], "--limit must be a whole number from 1 to 1000"],
+    [["ui", "--port", "-5", "--dir", dir], "--port must be a whole number from 0 to 65535"],
+    [["brief", "--max-chars", "-300", "--dir", dir], "--max-chars must be a whole number from 300 to 20000"],
+    [["handoff", "leave", "--text", "hi", "--expires-days", "-1", "--dir", dir], "expires-days must be a whole number from 1 to 90."],
+    [["search", "pnpm", "--limit", "-1.5", "--dir", dir], "--limit must be a whole number from 1 to 100"],
+  ];
+  for (const [args, message] of cases) {
+    const { io, err } = harness();
+    assert.equal(await run(args, io), 2, args.join(" "));
+    const text = err.join("\n");
+    assert.ok(text.startsWith(message), `${args.join(" ")}: ${text}`);
+    assert.doesNotMatch(text, /ambiguous/);
+  }
+  const other = harness();
+  assert.equal(await run(["search", "x", "--limit", "--json", "--dir", dir], other.io), 2);
+  assert.match(other.err.join("\n"), /ambiguous/, "a missing value that is not a number keeps Node's message");
+  const text = harness();
+  assert.equal(await run(["search", "x", "--text", "-1", "--dir", dir], text.io), 2);
+  assert.match(text.err.join("\n"), /ambiguous/, "only number options are joined");
+});
+
 test("--help prints usage and exits 0", async () => {
   const { io, out } = harness();
   assert.equal(await run(["--help"], io), 0);
