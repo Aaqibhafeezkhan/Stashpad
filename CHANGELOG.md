@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **A negative number option gets its range message:** `search --limit -1`, `ui --port -5`, `brief --max-chars -300` and the other number options used to print Node's "argument is ambiguous" text; the value is now checked like any other and answers with the option's own range and exit code 2. Other ambiguous values keep Node's message. Thanks to @Aadithya-kl! (#122, #123)
+
 - **The README quick start in Bahasa Indonesia** (`docs/README.id.md`): the description, Quickstart, Why Stashpad? and the start and end of a session, following README version 0.4, with a link from the English README. Thanks to @ghozali25! (#78, #125)
 
 - **`stashpad setup gemini` and `stashpad setup cline` print MCP settings:** an `mcpServers` block for `~/.gemini/settings.json` (or a project `.gemini/settings.json`) and for Cline's `cline_mcp_settings.json` (`~/.cline/data/settings/`, or `CLINE_MCP_SETTINGS_PATH`), with the full Node path (or `npx -y stashpad mcp` from an npx cache) and `STASHPAD_DIR` under `env` when `--dir` is given. Like the other clients it only prints and never edits your config. Thanks to @17302513901yh-lang! (#3, #119)
