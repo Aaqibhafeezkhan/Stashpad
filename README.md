@@ -16,6 +16,8 @@
 
 Works with Claude Code, Codex, OpenCode, Cursor, VS Code, Gemini CLI and any other MCP client, or with no MCP at all (plain commands and an `AGENTS.md` block). No model, no cloud, no dependencies: Node 20 or newer.
 
+Quick start in other languages: [Bahasa Indonesia](docs/README.id.md).
+
 ## Quickstart
 
 ```bash
