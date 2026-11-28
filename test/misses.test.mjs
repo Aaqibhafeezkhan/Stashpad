@@ -121,5 +121,7 @@ test("synonym add needs at least two words", async () => {
   const out = [];
   const err = [];
   const code = await run(["synonym", "add", "solo", "--dir", fresh()], { ...io(out), stderr: (s) => err.push(s) });
-  assert.equal(code, 1);
+  assert.equal(code, 2); // #121: a usage error, not a store error
+  assert.match(err.join("\n"), /a synonym group needs 2 to 20 words\./);
+  assert.match(err.join("\n"), /Run "stashpad --help" for all commands\./);
 });
