@@ -346,6 +346,24 @@ test("shown --since refuses a day that does not exist (#60)", async () => {
   assert.equal(await run(["shown", "--today", "--dir", dir], harness().io), 0);
 });
 
+test("a wrong filter date or a one-word synonym group is a usage error, not a store error (#121)", async () => {
+  const dir = freshDir();
+  for (const [args, message] of [
+    [["list", "--since", "2026-13-45"], `--since must be a date like 2026-10-01, not "2026-13-45".`],
+    [["search", "pnpm", "--as-of", "2026-02-30"], `--as-of must be a date like 2026-10-01, not "2026-02-30".`],
+    [["list", "--until", "nope"], `--until must be a date like 2026-10-01, not "nope".`],
+    [["synonym", "add", "only"], "a synonym group needs 2 to 20 words."],
+  ]) {
+    const { io, err } = harness();
+    assert.equal(await run([...args, "--dir", dir], io), 2);
+    assert.match(err.join("\n"), new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.match(err.join("\n"), /Run "stashpad --help" for all commands\./);
+    assert.doesNotMatch(err.join("\n"), /^Error:/m);
+  }
+  assert.equal(await run(["list", "--since", "2026-02-28", "--dir", dir], harness().io), 0);
+  assert.equal(await run(["synonym", "add", "k8s", "kubernetes", "--dir", dir], harness().io), 0);
+});
+
 test("one-id commands refuse a second id before changing anything (#69)", async () => {
   const dir = freshDir();
   assert.equal(await run(saveArgs(dir, "n1", ["--source-type", "agent"]), harness().io), 0);
