@@ -20,6 +20,7 @@ import { pinMemory, readPins, unpinMemory } from "./pins.mjs";
 import { recallBoth } from "./recall.mjs";
 import { globalStore, locateStore } from "./locate.mjs";
 import { addSynonyms, logMiss, missReport } from "./misses.mjs";
+import { MAX_GROUP_SIZE } from "./synonyms.mjs";
 import { runDoctor } from "./doctor.mjs";
 import { contractOf } from "./contract.mjs";
 import { VERSION, STORE_FORMAT } from "./version.mjs";
@@ -556,6 +557,9 @@ function cmdHistory(io, dir, id, values) {
 const csv = (value) => (value === undefined ? null : value.split(",").map((v) => v.trim()).filter(Boolean));
 
 function checkFilterValues(io, values) {
+  for (const [name, value] of [["as-of", values["as-of"]], ["since", values.since], ["until", values.until]]) {
+    if (value !== undefined && !isValidDay(value)) return usageError(io, `--${name} must be a date like 2026-10-01, not "${value}".`);
+  }
   const kinds = csv(values.kind);
   const badKind = kinds?.find((kind) => !KINDS.includes(kind));
   if (badKind) return usageError(io, `unknown kind "${badKind}". Use one of: ${KINDS.join(", ")}.`);
@@ -1053,6 +1057,8 @@ export async function run(argv, io = defaultIo()) {
       }
       case "synonym": {
         if (id !== "add") return usageError(io, "use: stashpad synonym add <word> <word...>");
+        const words = [...new Set(positionals.slice(2).map((w) => String(w).trim().toLowerCase()).filter(Boolean))];
+        if (words.length < 2 || words.length > MAX_GROUP_SIZE) return usageError(io, `a synonym group needs 2 to ${MAX_GROUP_SIZE} words.`);
         const done = addSynonyms(dir, positionals.slice(2));
         if (values.json) io.stdout(JSON.stringify(defuseValues({ status: done.duplicate ? "duplicate" : "added", groups: done.groups })));
         else io.stdout(`${done.duplicate ? "Already there" : "Added"}. ${done.groups} synonym group(s) in this store.`);
