@@ -7,8 +7,8 @@ import { StoreError } from "./errors.mjs";
 import { writeAtomic } from "./fsx.mjs";
 import { withStoreLock } from "./lock.mjs";
 import { prepareForWrite } from "./safety.mjs";
-import { isCurrent, readMemory, todayIso } from "./store.mjs";
-import { parseMemory } from "./memory-format.mjs";
+import { isCurrent, readMemory, filePath, todayIso } from "./store.mjs";
+import { hasValidIdShape, parseMemory } from "./memory-format.mjs";
 import { keyFor, openText, sealFor } from "./vault.mjs";
 
 export const PINS_FILE = "pins.json";
@@ -50,7 +50,16 @@ export function unpinMemory(dir, id) {
   return withStoreLock(dir, () => {
     keyFor(dir);
     const pins = readPins(dir);
-    if (!pins.includes(id)) return { id, changed: false, count: pins.length };
+    if (!pins.includes(id)) {
+      // A typo is not "Nothing changed": only an id that is neither pinned nor a
+      // memory in the store gets an error (#128). A pin whose file has been deleted
+      // is still unpinnable, so `lint` findings can be cleaned up.
+      if (!hasValidIdShape(id) || !existsSync(filePath(dir, id))) {
+        const pinned = pins.length ? pins.join(", ") : "none";
+        throw new StoreError(`"${id}" is not pinned and there is no memory with that name. Pinned now: ${pinned}.`);
+      }
+      return { id, changed: false, count: pins.length };
+    }
     writePins(dir, pins.filter((p) => p !== id));
     return { id, changed: true, count: pins.length - 1 };
   });

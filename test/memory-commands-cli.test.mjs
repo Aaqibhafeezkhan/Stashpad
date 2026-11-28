@@ -55,6 +55,36 @@ test("CLI pin, pins and unpin report and persist their state", (t) => {
   assert.deepEqual(JSON.parse(cli("pins", "--json").out), []);
 });
 
+test("CLI unpin of an id that is neither pinned nor a memory says so (#128)", (t) => {
+  const { dir, cli, put } = fixture(t);
+  const empty = cli("unpin", "ghost");
+  assert.equal(empty.code, 1, empty.err);
+  assert.equal(empty.out, "");
+  assert.equal(empty.err, 'Error: "ghost" is not pinned and there is no memory with that name. Pinned now: none.');
+
+  put("db-choice");
+  put("no-force-push");
+  success(cli("pin", "db-choice"), "Pinned db-choice (1 pinned).");
+  success(cli("pin", "no-force-push"), "Pinned no-force-push (2 pinned).");
+  const before = readFileSync(join(dir, "pins.json"), "utf8");
+  const typo = cli("unpin", "db-chioce");
+  assert.equal(typo.code, 1, typo.err);
+  assert.equal(typo.out, "");
+  assert.equal(typo.err, 'Error: "db-chioce" is not pinned and there is no memory with that name. Pinned now: db-choice, no-force-push.');
+  assert.equal(readFileSync(join(dir, "pins.json"), "utf8"), before, "a typo must not change the pins file");
+  const json = cli("unpin", "db-chioce", "--json");
+  assert.equal(json.code, 1);
+  assert.equal(json.out, "");
+  assert.match(json.err, /is not pinned and there is no memory/);
+
+  // The three behaviours from the issue stay exactly as they were.
+  success(cli("unpin", "db-choice"), "Unpinned db-choice (1 pinned).");
+  success(cli("unpin", "db-choice"), "Nothing changed (1 pinned)."); // exists, but is not pinned
+  rmSync(join(dir, "no-force-push.md"));
+  success(cli("unpin", "no-force-push"), "Unpinned no-force-push (0 pinned)."); // pinned id whose file is gone
+  assert.deepEqual(JSON.parse(cli("pins", "--json").out), []);
+});
+
 test("CLI missing ids, merge second id and recall words are usage errors", (t) => {
   const { cli } = fixture(t);
   for (const [args, message] of [
