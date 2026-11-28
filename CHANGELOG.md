@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **A wrong filter date or a one-word synonym group is a usage error:** `list --since 2026-13-45`, `search --as-of 2026-02-30`, `list --until nope` and `synonym add only` used to answer like a store problem (`Error:`, exit code 1). They now print one line and the help pointer with exit code 2, like the other typing mistakes. Thanks to @ghozali25! (#121, #131)
+
 - **`stashpad unpin <typo>` says there is no such memory:** an id that is neither pinned nor a memory in the store now gets one line naming the current pins and exit code 1, instead of `Nothing changed` at exit 0. Unpinning an existing memory that is not pinned still says `Nothing changed`, and a pinned id whose file is gone can still be unpinned. Thanks to @17302513901yh-lang! (#128, #129)
 
 - **A negative number option gets its range message:** `search --limit -1`, `ui --port -5`, `brief --max-chars -300` and the other number options used to print Node's "argument is ambiguous" text; the value is now checked like any other and answers with the option's own range and exit code 2. Other ambiguous values keep Node's message. Thanks to @Aadithya-kl! (#122, #123)
